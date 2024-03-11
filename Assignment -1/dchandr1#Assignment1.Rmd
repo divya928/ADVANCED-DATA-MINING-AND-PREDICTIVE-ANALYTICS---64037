@@ -1,0 +1,136 @@
+---
+title: "ADVANCED DATA MINING ASSIGNMENT 1"
+author: "DIVYA CHANDRASEKARAN_811284790"
+date: "2024-03-11"
+output: word_document
+---
+
+```{r}
+#PART - B
+
+#Loading the required packages
+library(class)
+```
+
+```{r}
+library(caret)
+```
+
+```{r}
+library(ggplot2)
+library(ISLR)
+library(corrplot)
+```
+
+```{r}
+library(tidyverse)
+```
+
+```{r}
+library(dplyr)
+library(tinytex)
+library(glmnet)
+```
+
+```{r}
+#Loading the car seats data
+carseats <- Carseats
+View(carseats)
+```
+
+```{r}
+#Checking for null values in the dataset
+print(is.null(carseats))
+```
+
+```{r}
+#Subsetting the data
+Carseats_Filtered <- carseats %>% select(Sales, Price, Advertising, Population, Age, Income, Education)
+summary(Carseats_Filtered)
+```
+
+```{r}
+#Now, let's construct a correlation plot for the Carseats_Filtered data
+corrplot(cor(Carseats_Filtered))
+```
+
+#From this we can conclude that the sales has negative correlation with Price and Age, whereas positive correlation with Advertising and Income. 
+
+```{r}
+#Let's do normalization for this model
+set.seed(1)
+normalize_new_car <- scale(Carseats_Filtered)
+X <- as.matrix(normalize_new_car[, c('Price', 'Advertising', 'Population', 'Age', 'Income', 'Education')])
+Y <- normalize_new_car[, 'Sales']
+fit.lasso <- glmnet(X, Y, alpha = 1)
+plot(fit.lasso,xvar = "lambda")
+
+```
+
+```{r}
+plot(cv.glmnet(X, Y, alpha = 1))
+```
+
+```{r}
+#QUESTION 1
+#BUILDING A LASSO REGULARIZATION MODEL TO PREDICT SALES BASED ON ALL OTHER ATTRIBUTES ('Price', 'Advertising', 'population', 'Age', 'Income', and 'Education'). 
+#What is the best value of lambda for such a lasso model?
+
+cv_fit <- cv.glmnet(X, Y, alpha = 1)
+plot(cv_fit)
+```
+
+```{r}
+lambdaa <- cv_fit$lambda.min
+lambdaa
+```
+
+#Therefore, the best value of lambda is 0.00465
+
+```{R}
+#QUESTION2
+#WHAT IS THE COEFFICIENT FOR THE PRICE (NORMALIZED) ATTRIBUTE IN THE BEST MODEL (I.E., MODEL WITH THE OPTIMAL LAMBDA)?
+
+coef(fit.lasso, s = lambdaa)
+```
+#The coefficient for the “Price” (normalized) is -4.758044e-01
+
+```{r}
+#QUESTION 3
+#HOW MANY ATTRIBUTES REMAIN IN THE MODEL IF LAMBDA I SET TO 0.01? 
+#HOW IS THAT NUMBER CHANGES IF LAMBDA IS INCREASED TO 0.1? 
+#DO WE EXPECT MORE VARIABLES TO STAY IN THE MODEL AS WE INCREASE THE LAMBDA? 
+
+coef(fit.lasso, s = 0.01)
+```
+
+```{R}
+coef(fit.lasso, s = 0.1)
+```
+
+##As it can be seen from the above, we are not losing any attributes in the model When the Lambda value is decreased from 0.0015 to 0.01. Whereas, some of the attributes i.e. Population and Education have been lost when we increased the lambda value from 0.01 to 0.1. With an increase in the lambda value, it is likely that more properties will be lost.
+
+```{r}
+#QUESTION4
+# BUILD AN ELASTIC NET-MODEL WITH ALPHA SET TO 0.6. 
+#WHAT IS THE BEST VALUE OF LAMBDA FOR SUCH A MODEL?
+
+fit.elastic.model <- glmnet(X,Y,alpha = 0.6)
+plot(fit.elastic.model, xvar = "lambda")
+```
+
+```{r}
+plot(cv.glmnet(X,Y,alpha = 0.6))
+```
+
+```{r}
+CV.Fit.elastic <- cv.glmnet(X,Y, alpha = 0.6)
+plot(CV.Fit.elastic)
+```
+
+```{r}
+elastic <- CV.Fit.elastic$lambda.min
+elastic
+```
+
+#The best value of Lambda for an elastic model with alpha set to 0.6 is 0.00776
