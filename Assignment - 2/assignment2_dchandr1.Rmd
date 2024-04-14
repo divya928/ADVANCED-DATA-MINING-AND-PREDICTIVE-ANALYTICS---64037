@@ -1,0 +1,118 @@
+---
+title: "Assignment - 2"
+author: "DIVYA CHANDRASEKARAN_811284790"
+date: "2024-04-14"
+output:
+  pdf_document: default
+  word_document: default
+---
+
+```{r}
+#Loading the required libraries
+
+library(ISLR)
+library(dplyr)
+```
+
+```{r}
+library(glmnet)
+library(caret)
+```
+
+```{r}
+library(ggplot2)
+library(lattice)
+library(Matrix)
+library(rpart)
+library(rpart.plot)
+```
+
+```{r}
+#For this assignment, we only need the following attributes: “Sales”, “Price”, “Advertising”, “Population”, “Age”, “Income” and “Education”. The goal of the assignment is to build models to predict the sales of the carseats (“Sales” attribute) using the other attributes. We can use the dplyr select function to select these attributes.
+
+Carseats_filterd <-Carseats%>%select("Sales","Price","Advertising","Population","Age","Income","Education")
+
+```
+
+```{r}
+#QUESTION B1
+#Build a decision tree regression model to predict Sales based on all other attributes (“Price”, “Advertising”, “Population”,“Age”, “Income” and “Education”). Which attribute is used at the top of the tree (the root node) for splitting? Hint: you can either plot () and text() functions or use the summary() function to see the decision tree rules.
+
+#Checking which attribute comes on the to of the tree
+
+Model <-rpart(Sales~.,data = Carseats_filterd,method = 'anova')
+summary(Model)
+```
+
+```{R}
+#According to the above summary details the most vital attribute on deciding sales is “price”.Therefore, it is the attribute which should come on the top of the tree model. This can be proved by the following plots.
+```
+
+```{r}
+#Less complex plot
+
+decision_tree <- rpart(Sales~.,data = Carseats_filterd,method = "anova",control =rpart.control(minsplit = 60))
+plot(decision_tree)
+text(decision_tree)
+```
+
+```{r}
+#fancy RpartPlot
+decision_tree2 <- rpart(Sales~.,data=Carseats_filterd,method='anova')
+rpart.plot(decision_tree2)
+```
+
+```{r}
+#QUESTION B2
+#QB2. Consider the following input* • Sales=9 • Price=6.54 • Population=124 • Advertising=0 • Age=76 • Income= 110 • Education=10 What will be the estimated Sales for this record using the decision tree model?
+
+mydata <-data.frame(Price=6.54,Population=124,Advertising=0,Age=76,Income=110,Education=10)
+estimated_sales<-predict(decision_tree2,mydata)
+estimated_sales
+```
+
+```{r}
+#According to the above information, the estimated sales for this record using decision tree model is 9.58625.
+```
+
+
+```{R}
+#QUESTION B3
+#QB3. Use the caret function to train a random forest (method=’rf’) for the same dataset. Use the caret default settings. By default, caret will examine the “mtry” values of 2,4, and 6. Recall that mtry is the number of attributes available for splitting at each splitting node. Which mtry value gives the best performance?
+
+set.seed(123)
+random_forest <-train(Sales~.,data = Carseats_filterd,method='rf')
+summary(random_forest)
+```
+
+```{r}
+print(random_forest)
+```
+
+```{r}
+plot(random_forest)
+```
+
+```{R}
+#According to the above summary, RMSE is the lowest when mtry=2. Therefore, mtry 2 gives the best performance.
+```
+
+```{R}
+#QUESTION B4
+#Customize the search grid by checking the model’s performance for mtry values of 2, 3 and 5 using 3 repeats of 5-fold cross validation.
+
+library(caret)
+set.seed(123)
+C_grid <- trainControl(method = "repeatedcv",number = 5,repeats = 3,search ="grid")
+C_grid2 <- expand.grid(.mtry=c(2,3,5))
+RF_grid <- train(Sales~.,data=Carseats_filterd,method="rf",tuneGrid=C_grid2,trControl=C_grid)
+print(RF_grid)
+```
+
+```{R}
+plot(RF_grid)
+```
+
+```{R}
+#According to the above summary, RMSE is the lowest when mtry=3. Therefore, mtry 3 gives the best performance
+```
